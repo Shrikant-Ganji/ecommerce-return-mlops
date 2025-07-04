@@ -1,0 +1,14 @@
+name: daily-evidently-monitoring
+version: null
+description: "Run Evidently monitor flow daily"
+schedule:
+  cron: "0 0 * * *"
+  timezone: UTC
+flow_name: run_evidently_monitor
+entrypoint: run_monitoring_flow.py:run_evidently_monitor
+parameters: {}
+tags: []
+work_pool:
+  name: default
+  work_queue_name: default
+  job_variables: {}
