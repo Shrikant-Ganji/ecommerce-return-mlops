@@ -1,0 +1,15 @@
+artifact_uri: file:///workspaces/ecommerce-return-mlops/notebooks/mlruns/0/5d89f1acb8bf48989fec8452693ac8bd/artifacts
+end_time: 1751563271743
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 5d89f1acb8bf48989fec8452693ac8bd
+run_name: unleashed-doe-518
+run_uuid: 5d89f1acb8bf48989fec8452693ac8bd
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1751563262767
+status: 3
+tags: []
+user_id: codespace
