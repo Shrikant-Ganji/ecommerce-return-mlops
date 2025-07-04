@@ -1,7 +1,5 @@
-# deployment/app.py
-
 from fastapi import FastAPI
-from pydantic import BaseModel, create_model
+from pydantic import create_model
 import joblib
 import pandas as pd
 import os
@@ -12,12 +10,15 @@ app = FastAPI()
 model_path = os.path.join(os.path.dirname(__file__), "../models/return_model.joblib")
 model = joblib.load(model_path)
 
-# === Dynamically generate input model based on train.parquet ===
+# === Load data schema ===
 data_path = os.path.join(os.path.dirname(__file__), "../data/processed/X_train.parquet")
 X_train = pd.read_parquet(data_path)
 input_features = X_train.columns.tolist()
 
-# Dynamically create Pydantic input model
+# Define actual features used during training (important!)
+model_input_features = ['delivery_delay', 'delivery_time', 'payment_value', 'product_category_name']
+
+# Create Pydantic input model using all features (for validation)
 fields = {col: (float, ...) for col in input_features}
 DynamicInput = create_model("DynamicInput", **fields)
 
@@ -27,6 +28,13 @@ def read_root():
 
 @app.post("/predict")
 def predict(input_data: DynamicInput):
-    data = pd.DataFrame([input_data.dict()])
-    prediction = model.predict(data)[0]
-    return {"prediction": int(prediction)}
+    try:
+        # Convert input to DataFrame
+        full_data = pd.DataFrame([input_data.dict()])
+        # Select only model-required features
+        data = full_data[model_input_features]
+        # Predict
+        prediction = model.predict(data)[0]
+        return {"prediction": int(prediction)}
+    except Exception as e:
+        return {"error": str(e)}
