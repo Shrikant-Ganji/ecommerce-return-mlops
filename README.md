@@ -12,16 +12,33 @@ This repository demonstrates a complete **end-to-end MLOps pipeline** using:
 
 ---
 
-## 🎯 Objective
+## 🎯 Project Context & Objective
 
-Predict product returns in an e-commerce platform using historical order, customer, and product data. The project includes all key MLOps stages:
+### 📦 Context
 
-* Data preprocessing
-* Model training and tracking
-* Pipeline orchestration
-* Model deployment (optional)
-* Data drift monitoring
-* Automation via CI/CD
+Product returns are a significant challenge in the e-commerce industry. They not only affect revenue but also disrupt supply chains and impact customer satisfaction. Companies like Amazon and Flipkart gather extensive data related to orders, customers, payments, shipping, and product reviews. Mining these datasets can reveal patterns that help predict whether a product is likely to be returned.
+
+Understanding the likelihood of a product return **before it happens** allows e-commerce platforms to:
+
+* Reduce logistical costs and losses
+* Identify potentially problematic listings or sellers
+* Improve customer service and satisfaction
+* Implement proactive customer communication or incentives
+
+### 🎯 Objective
+
+The objective of this project is to build a machine learning model to **predict whether a product will be returned** based on historical data from an e-commerce platform and then implement a complete **MLOps workflow** around this model. This includes:
+
+* Loading and preprocessing historical customer/order/product data
+* Training and tuning a machine learning model (Random Forest)
+* Tracking all experiments and model versions using MLflow
+* Orchestrating the pipeline using Prefect 2.0 for scheduled runs
+* Containerizing and optionally deploying a FastAPI service
+* Monitoring data drift using Evidently AI
+* Automating pipeline via GitHub Actions CI/CD
+* Preparing infrastructure as code using Terraform for portability
+
+This project simulates a production-grade workflow for real-world deployment and lifecycle management of ML solutions.
 
 ---
 
