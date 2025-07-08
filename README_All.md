@@ -10,11 +10,15 @@ It incorporates:
 
 * 🧠 **Machine Learning model** trained using historical e-commerce data
 * 🚀 **Prefect 2.0** to orchestrate the entire pipeline
+  ![Prefect Flow](images/prefect-01.png)
 * 📈 **MLflow** for experiment tracking and model registry
+  ![MLflow UI](images/mlflow-00.png)
 * ⚙️ **FastAPI** for real-time model serving
+  ![Render FastAPI Deployment]
 * 🧪 **Evidently AI** for automated model/data drift monitoring
 * 📦 **Docker** to containerize the services
 * ☁️ **Render** for deployment (using Terraform)
+  ![Render Deployment](images/render-01.png)
 * ↻ **CI/CD pipeline** via GitHub Actions
 
 By combining modular design and modern tooling, this project adheres to **MLOps best practices**, ensuring automation, scalability, versioning, monitoring, and reproducibility.
@@ -99,6 +103,8 @@ For production, one can upgrade:
 python src/data_prep.py
 ```
 
+---
+
 ### 📈 Model Training with MLflow (`src/train.py`)
 
 * Train `RandomForestClassifier`
@@ -122,7 +128,11 @@ python src/train.py
 mlflow ui --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns
 ```
 
+![MLflow UI Detailed View](images/mlflow-01.png)
+
 URL: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+---
 
 ### 🎺 Prediction (`src/predict.py`)
 
@@ -136,6 +146,8 @@ URL: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 python src/predict.py
 ```
 
+---
+
 ### ↻ Full Orchestration (`pipelines/prefect_flow.py`)
 
 * A unified `@flow` for preprocessing, training, prediction, monitoring
@@ -146,6 +158,8 @@ python src/predict.py
 prefect deploy pipelines/prefect_flow.py:full_pipeline -n "Ecommerce Return Pipeline"
 prefect deployment run 'ecommerce-return-mlops/Ecommerce Return Pipeline'
 ```
+
+![Prefect Deployment UI](images/prefect-02.png)
 
 ---
 
@@ -172,10 +186,16 @@ uvicorn deployment.app:app --reload --port 8000
 * Connect GitHub repo
 * Select Web Service → Dockerfile → root = project root
 
+![Render Deployment](images/render-02.png)
+
+---
+
 ### ⚠️ Terraform IaC (`terraform/`)
 
 * Defines Render/GCP infrastructure
 * Used for provisioning via `terraform apply`
+
+![Render Terraform Preview]
 
 ---
 
@@ -193,10 +213,14 @@ uvicorn deployment.app:app --reload --port 8000
 python monitoring/evidently_monitor.py
 ```
 
+---
+
 ### ↻ Scheduled with Prefect
 
 * Deployed as standalone monitoring flow
 * Future: Add auto-retrain or Slack alerts
+
+![Evidently Drift Monitoring Example]
 
 ---
 
