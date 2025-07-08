@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: 📥 Checkout Repo
         uses: actions/checkout@v3
@@ -27,22 +28,19 @@ jobs:
         run: |
           pytest tests/
 
-      # Optional: Use Flake8 for code quality checks
       - name: 💅 Lint Code (flake8)
         run: |
           pip install flake8
-          flake8 src/ pipelines/ tests/ deployment/
+          flake8 --config=.flake8 src/ pipelines/ tests/ deployment/
 
-      # Optional: Format check with Black
       - name: 🎨 Check Formatting (black)
         run: |
           pip install black
           black --check .
 
-      # Optional: Run Makefile commands (if defined)
       - name: 🛠️ Run Makefile (Optional)
         run: |
-          make test
+          if [ -f Makefile ]; then make test; fi
 
       # Optional: Terraform provisioning (commented if not used)
       # - name: 🏗️ Terraform Deploy Infra (Render/GCP)

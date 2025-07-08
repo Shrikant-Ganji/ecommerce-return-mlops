@@ -1,0 +1,17 @@
+[flake8]
+max-line-length = 120
+ignore = E402, E266, W503
+exclude =
+    .venv/,
+    venv/,
+    notebooks/,
+    mlruns/,
+    data/,
+    __pycache__/,
+    *.pyc,
+    *.ipynb,
+    .git/,
+    .mypy_cache/
+per-file-ignores =
+    .venv/*: ALL
+    venv/*: ALL
