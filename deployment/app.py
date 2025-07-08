@@ -1,8 +1,9 @@
-from fastapi import FastAPI
-from pydantic import create_model
+import os
+
 import joblib
 import pandas as pd
-import os
+from fastapi import FastAPI
+from pydantic import create_model
 
 app = FastAPI()
 
@@ -16,15 +17,22 @@ X_train = pd.read_parquet(data_path)
 input_features = X_train.columns.tolist()
 
 # Define actual features used during training (important!)
-model_input_features = ['delivery_delay', 'delivery_time', 'payment_value', 'product_category_name']
+model_input_features = [
+    "delivery_delay",
+    "delivery_time",
+    "payment_value",
+    "product_category_name",
+]
 
 # Create Pydantic input model using all features (for validation)
 fields = {col: (float, ...) for col in input_features}
 DynamicInput = create_model("DynamicInput", **fields)
 
+
 @app.get("/")
 def read_root():
     return {"message": "E-commerce Return Prediction API is live!"}
+
 
 @app.post("/predict")
 def predict(input_data: DynamicInput):

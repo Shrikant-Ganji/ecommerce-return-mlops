@@ -1,5 +1,7 @@
-from prefect.client.orchestration import get_client
 import asyncio
+
+from prefect.client.orchestration import get_client
+
 
 async def trigger_deployment():
     async with get_client() as client:
@@ -7,6 +9,7 @@ async def trigger_deployment():
             deployment_id="ecommerce-return-mlops/Ecommerce Return Pipeline"
         )
         print(f"✅ Deployment triggered! Flow Run ID: {flow_run.id}")
+
 
 if __name__ == "__main__":
     asyncio.run(trigger_deployment())

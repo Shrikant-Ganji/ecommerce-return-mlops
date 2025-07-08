@@ -1,10 +1,12 @@
-from prefect import flow, task
-import pandas as pd
-import joblib
 import os
-from sklearn.model_selection import train_test_split
+
+import joblib
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import train_test_split
+
+from prefect import flow, task
 
 RAW_DATA_PATH = os.path.join("data", "raw")
 PROCESSED_DATA_PATH = os.path.join("data", "processed")
@@ -17,12 +19,17 @@ os.makedirs(MODEL_DIR, exist_ok=True)
 
 # === Tasks ===
 
+
 @task(log_prints=True)
 def load_data():
     try:
         orders = pd.read_csv(
             os.path.join(RAW_DATA_PATH, "olist_orders.csv"),
-            parse_dates=["order_purchase_timestamp", "order_delivered_customer_date", "order_estimated_delivery_date"],
+            parse_dates=[
+                "order_purchase_timestamp",
+                "order_delivered_customer_date",
+                "order_estimated_delivery_date",
+            ],
         )
         order_items = pd.read_csv(os.path.join(RAW_DATA_PATH, "olist_order_items.csv"))
         products = pd.read_csv(os.path.join(RAW_DATA_PATH, "olist_products.csv"))
@@ -40,20 +47,40 @@ def load_data():
     except Exception as e:
         raise RuntimeError(f"❌ Error loading data: {e}")
 
+
 @task(log_prints=True)
 def preprocess(df):
     try:
         df = df[df["order_status"] == "delivered"].copy()
-        df["delivery_delay"] = (df["order_delivered_customer_date"] - df["order_estimated_delivery_date"]).dt.days
-        df["delivery_time"] = (df["order_delivered_customer_date"] - df["order_purchase_timestamp"]).dt.days
+        df["delivery_delay"] = (
+            df["order_delivered_customer_date"] - df["order_estimated_delivery_date"]
+        ).dt.days
+        df["delivery_time"] = (
+            df["order_delivered_customer_date"] - df["order_purchase_timestamp"]
+        ).dt.days
         df["is_returned"] = df["review_score"].apply(lambda x: 1 if x in [1, 2] else 0)
 
-        features = df[["delivery_delay", "delivery_time", "payment_value", "product_category_name", "is_returned"]].dropna().copy()
-        features["product_category_name"] = features["product_category_name"].astype("category").cat.codes
+        features = (
+            df[
+                [
+                    "delivery_delay",
+                    "delivery_time",
+                    "payment_value",
+                    "product_category_name",
+                    "is_returned",
+                ]
+            ]
+            .dropna()
+            .copy()
+        )
+        features["product_category_name"] = (
+            features["product_category_name"].astype("category").cat.codes
+        )
         print("✅ Preprocessing complete")
         return features
     except Exception as e:
         raise RuntimeError(f"❌ Error in preprocessing: {e}")
+
 
 @task(log_prints=True)
 def split_save_data(features):
@@ -68,6 +95,7 @@ def split_save_data(features):
     except Exception as e:
         raise RuntimeError(f"❌ Error splitting/saving data: {e}")
 
+
 @task(log_prints=True)
 def train_model(train_path):
     try:
@@ -81,6 +109,7 @@ def train_model(train_path):
         return MODEL_PATH
     except Exception as e:
         raise RuntimeError(f"❌ Error training model: {e}")
+
 
 @task(log_prints=True)
 def evaluate_model(test_path, model_path):
@@ -97,6 +126,7 @@ def evaluate_model(test_path, model_path):
     except Exception as e:
         raise RuntimeError(f"❌ Error evaluating model: {e}")
 
+
 @task(log_prints=True)
 def predict(test_path, model_path):
     try:
@@ -111,7 +141,9 @@ def predict(test_path, model_path):
     except Exception as e:
         raise RuntimeError(f"❌ Error in prediction: {e}")
 
+
 # === Flow ===
+
 
 @flow(name="ecommerce-return-mlops")
 def full_pipeline():
@@ -121,6 +153,7 @@ def full_pipeline():
     model_path = train_model(train_path)
     evaluate_model(test_path, model_path)
     predict(test_path, model_path)
+
 
 if __name__ == "__main__":
     full_pipeline()

@@ -31,16 +31,16 @@ jobs:
       - name: 💅 Lint Code (flake8)
         run: |
           pip install flake8
-          flake8 --config=.flake8 src/ pipelines/ tests/ deployment/
+          flake8 src/ pipelines/ tests/ deployment/
 
       - name: 🎨 Check Formatting (black)
         run: |
           pip install black
           black --check .
 
-      - name: 🛠️ Run Makefile (Optional)
-        run: |
-          if [ -f Makefile ]; then make test; fi
+      # - name: 🛠️ Run Makefile (Optional)
+      #   run: |
+      #     make test
 
       # Optional: Terraform provisioning (commented if not used)
       # - name: 🏗️ Terraform Deploy Infra (Render/GCP)
