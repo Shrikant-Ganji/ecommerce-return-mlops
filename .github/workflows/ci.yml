@@ -62,8 +62,8 @@ jobs:
 
       - name: 🔐 Login to GitHub Container Registry (GHCR)
         env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-        run: echo $GHCR_TOKEN | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          CODESPACE_TOKEN: ${{ secrets.CODESPACE_TOKEN }}
+        run: echo $CODESPACE_TOKEN | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: 📤 Push Docker image to GHCR
         run: |
@@ -71,21 +71,21 @@ jobs:
           docker push "$IMAGE_NAME"
 
   # terraform-deploy:
-#   needs: build-test-lint
-#   runs-on: ubuntu-latest
-#   if: github.ref == 'refs/heads/main'
-#
-#   steps:
-#     - name: 📥 Checkout code
-#       uses: actions/checkout@v3
-#
-#     - name: 🏗️ Setup Terraform
-#       uses: hashicorp/setup-terraform@v2
-#
-#     - name: 📂 Terraform Init & Apply
-#       working-directory: terraform
-#       env:
-#         TF_VAR_render_api_key: ${{ secrets.RENDER_API_KEY }}
-#       run: |
-#         terraform init
-#         terraform apply -auto-approve
+  #   needs: build-test-lint
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #
+  #   steps:
+  #     - name: 📥 Checkout code
+  #       uses: actions/checkout@v3
+  #
+  #     - name: 🏗️ Setup Terraform
+  #       uses: hashicorp/setup-terraform@v2
+  #
+  #     - name: 📂 Terraform Init & Apply
+  #       working-directory: terraform
+  #       env:
+  #         TF_VAR_render_api_key: ${{ secrets.RENDER_API_KEY }}
+  #       run: |
+  #         terraform init
+  #         terraform apply -auto-approve
