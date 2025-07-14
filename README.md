@@ -1,10 +1,14 @@
-# 🏍️ E-Commerce Product Return Prediction — End-to-End MLOps Project
+# 🛍️ E-Commerce Product Return Prediction — End-to-End MLOps Project
 
 ---
+
+![E-Commerce Product Return Prediction](images/ecommerce.png)
 
 ## 1. Overview
 
 This project showcases a production-grade **end-to-end MLOps workflow** to predict whether a purchased product will be returned in an e-commerce platform. The primary aim is to reduce costs associated with product returns by predicting them ahead of time using historical data and deploying the model in a scalable, automated, and monitorable setup.
+
+(images/ecommerce.png)
 
 It incorporates:
 

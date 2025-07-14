@@ -56,33 +56,36 @@ jobs:
         run: docker build -t ecommerce-return-app .
 
       - name: 🔖 Tag Docker image for GHCR
-        run: docker tag ecommerce-return-app ghcr.io/${{ github.actor }}/ecommerce-return-app:latest
+        run: |
+          IMAGE_NAME="ghcr.io/${GITHUB_ACTOR,,}/ecommerce-return-app:latest"
+          docker tag ecommerce-return-app "$IMAGE_NAME"
 
       - name: 🔐 Login to GitHub Container Registry (GHCR)
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-        run: echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: echo $GHCR_TOKEN | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: 📤 Push Docker image to GHCR
-        run: docker push ghcr.io/${{ github.actor }}/ecommerce-return-app:latest
-
-  terraform-deploy:
-    needs: build-test-lint
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
-
-      - name: 🏗️ Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: 📂 Terraform Init & Apply
-        working-directory: terraform
-        env:
-          # Replace this with your actual Terraform variable names matching your .tf files
-          TF_VAR_render_api_key: ${{ secrets.RENDER_API_KEY }}
         run: |
-          terraform init
-          terraform apply -auto-approve
+          IMAGE_NAME="ghcr.io/${GITHUB_ACTOR,,}/ecommerce-return-app:latest"
+          docker push "$IMAGE_NAME"
+
+  # terraform-deploy:
+#   needs: build-test-lint
+#   runs-on: ubuntu-latest
+#   if: github.ref == 'refs/heads/main'
+#
+#   steps:
+#     - name: 📥 Checkout code
+#       uses: actions/checkout@v3
+#
+#     - name: 🏗️ Setup Terraform
+#       uses: hashicorp/setup-terraform@v2
+#
+#     - name: 📂 Terraform Init & Apply
+#       working-directory: terraform
+#       env:
+#         TF_VAR_render_api_key: ${{ secrets.RENDER_API_KEY }}
+#       run: |
+#         terraform init
+#         terraform apply -auto-approve
