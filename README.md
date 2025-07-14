@@ -1,14 +1,9 @@
 # 🛍️ E-Commerce Product Return Prediction — End-to-End MLOps Project
-
----
-
-![E-Commerce Product Return Prediction](images/ecommerce.png)
-
 ## 1. Overview
 
 This project showcases a production-grade **end-to-end MLOps workflow** to predict whether a purchased product will be returned in an e-commerce platform. The primary aim is to reduce costs associated with product returns by predicting them ahead of time using historical data and deploying the model in a scalable, automated, and monitorable setup.
 
-(images/ecommerce.png)
+![E-Commerce Product Return Prediction](images/ecommerce.png)
 
 It incorporates:
 
@@ -18,8 +13,8 @@ It incorporates:
 * 📈 **MLflow** for experiment tracking and model registry
   ![MLflow UI](images/mlflow-00.png)
 * ⚙️ **FastAPI** for real-time model serving
-  ![Render FastAPI Deployment]
 * 🧪 **Evidently AI** for automated model/data drift monitoring
+  ![Evidently A](images/evidently.png)
 * 📦 **Docker** to containerize the services
 * ☁️ **Render** for deployment (using Terraform)
   ![Render Deployment](images/render-01.png)
