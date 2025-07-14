@@ -1,58 +1,88 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  build-test-lint:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Repo
+      - name: 📥 Checkout code
         uses: actions/checkout@v3
 
-      - name: 🐍 Set up Python 3.11
+      - name: 🐍 Setup Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: 📦 Install Dependencies
+      - name: 📦 Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 🧪 Run Unit Tests with Pytest
+      - name: 🧪 Run tests with pytest
+        run: pytest tests/
+
+      - name: 💅 Lint code with flake8
+        run: flake8 src/ pipelines/ tests/ deployment/
+
+      - name: 🎨 Check formatting with black
+        run: black --check .
+
+  docker-build-push:
+    needs: build-test-lint
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🐍 Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🚀 Build Docker image
+        run: docker build -t ecommerce-return-app .
+
+      - name: 🔖 Tag Docker image for GHCR
+        run: docker tag ecommerce-return-app ghcr.io/${{ github.actor }}/ecommerce-return-app:latest
+
+      - name: 🔐 Login to GitHub Container Registry (GHCR)
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: 📤 Push Docker image to GHCR
+        run: docker push ghcr.io/${{ github.actor }}/ecommerce-return-app:latest
+
+  terraform-deploy:
+    needs: build-test-lint
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🏗️ Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: 📂 Terraform Init & Apply
+        working-directory: terraform
+        env:
+          # Replace this with your actual Terraform variable names matching your .tf files
+          TF_VAR_render_api_key: ${{ secrets.RENDER_API_KEY }}
         run: |
-          pytest tests/
-
-      - name: 💅 Lint Code (flake8)
-        run: |
-          pip install flake8
-          flake8 src/ pipelines/ tests/ deployment/
-
-      - name: 🎨 Check Formatting (black)
-        run: |
-          pip install black
-          black --check .
-
-      # - name: 🛠️ Run Makefile (Optional)
-      #   run: |
-      #     make test
-
-      # Optional: Terraform provisioning (commented if not used)
-      # - name: 🏗️ Terraform Deploy Infra (Render/GCP)
-      #   run: |
-      #     cd terraform
-      #     terraform init
-      #     terraform apply -auto-approve
-
-      # Optional: Docker build & push to Render/GHCR
-      # - name: 🚀 Build and Deploy Docker App
-      #   run: |
-      #     docker build -t ecommerce-return-app .
-      #     docker tag ecommerce-return-app ghcr.io/<your-user>/ecommerce-return-app:latest
-      #     echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-      #     docker push ghcr.io/<your-user>/ecommerce-return-app:latest
+          terraform init
+          terraform apply -auto-approve

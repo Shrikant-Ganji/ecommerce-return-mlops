@@ -1,246 +1,292 @@
-# 🛍️ Ecommerce Return Prediction — End-to-End MLOps Project
-
-This repository demonstrates a complete **end-to-end MLOps pipeline** using:
-
-* **Prefect 2.0** for orchestration and scheduled deployments
-* **MLflow** for experiment tracking and model registry
-* **Evidently AI** for monitoring data drift
-* **Scikit-learn + Joblib** for modeling
-* **GitHub Codespaces + Render** for development and deployment
-* **GitHub Actions** for CI/CD automation
-* **Terraform** for Infrastructure as Code (planned)
+# 🏍️ E-Commerce Product Return Prediction — End-to-End MLOps Project
 
 ---
 
-## 🎯 Project Context & Objective
+## 1. Overview
 
-### 📦 Context
+This project showcases a production-grade **end-to-end MLOps workflow** to predict whether a purchased product will be returned in an e-commerce platform. The primary aim is to reduce costs associated with product returns by predicting them ahead of time using historical data and deploying the model in a scalable, automated, and monitorable setup.
 
-Product returns are a significant challenge in the e-commerce industry. They not only affect revenue but also disrupt supply chains and impact customer satisfaction. Companies like Amazon and Flipkart gather extensive data related to orders, customers, payments, shipping, and product reviews. Mining these datasets can reveal patterns that help predict whether a product is likely to be returned.
+It incorporates:
 
-Understanding the likelihood of a product return **before it happens** allows e-commerce platforms to:
+* 🧠 **Machine Learning model** trained using historical e-commerce data
+* 🚀 **Prefect 2.0** to orchestrate the entire pipeline
+  ![Prefect Flow](images/prefect-01.png)
+* 📈 **MLflow** for experiment tracking and model registry
+  ![MLflow UI](images/mlflow-00.png)
+* ⚙️ **FastAPI** for real-time model serving
+  ![Render FastAPI Deployment]
+* 🧪 **Evidently AI** for automated model/data drift monitoring
+* 📦 **Docker** to containerize the services
+* ☁️ **Render** for deployment (using Terraform)
+  ![Render Deployment](images/render-01.png)
+* ↻ **CI/CD pipeline** via GitHub Actions
 
-* Reduce logistical costs and losses
-* Identify potentially problematic listings or sellers
-* Improve customer service and satisfaction
-* Implement proactive customer communication or incentives
-
-### 🎯 Objective
-
-The objective of this project is to build a machine learning model to **predict whether a product will be returned** based on historical data from an e-commerce platform and then implement a complete **MLOps workflow** around this model. This includes:
-
-* Loading and preprocessing historical customer/order/product data
-* Training and tuning a machine learning model (Random Forest)
-* Tracking all experiments and model versions using MLflow
-* Orchestrating the pipeline using Prefect 2.0 for scheduled runs
-* Containerizing and optionally deploying a FastAPI service
-* Monitoring data drift using Evidently AI
-* Automating pipeline via GitHub Actions CI/CD
-* Preparing infrastructure as code using Terraform for portability
-
-This project simulates a production-grade workflow for real-world deployment and lifecycle management of ML solutions.
+By combining modular design and modern tooling, this project adheres to **MLOps best practices**, ensuring automation, scalability, versioning, monitoring, and reproducibility.
 
 ---
 
-## 🧰 Tech Stack Overview
+## 2. Problem Description
 
-| Component              | Tool / Platform            |
-| ---------------------- | -------------------------- |
-| Cloud/Dev Environment  | GitHub Codespaces + Render |
-| Experiment Tracking    | MLflow                     |
-| Workflow Orchestration | Prefect 2.0                |
-| Monitoring             | Evidently AI               |
-| CI/CD                  | GitHub Actions             |
-| Infrastructure as Code | Terraform (Render or GCP)  |
+Product returns pose a significant cost for online retailers. Early prediction of such events allows companies to optimize logistics, personalize experiences, or flag risky orders for manual review.
+
+**Problem Statement**: Can we predict whether an item will be returned using structured historical data from customer orders, product types, payment history, and reviews?
+
+**ML Objective**: Train a binary classification model to predict `return_status` (0 = No Return, 1 = Return) based on customer behavior, product metadata, and transactional features.
 
 ---
 
-## 📂 Folder Structure & Module Overview
+## 3. Dataset Information
+
+We use the **Olist E-commerce Dataset** (from Kaggle/UCI):
+
+* **Size**: \~100k orders across 9 CSV files
+* **Source**: Brazilian e-commerce platform
+* **Files include**:
+
+  * `olist_orders.csv`: order metadata
+  * `olist_order_items.csv`: items per order
+  * `olist_customers.csv`: customer demographics
+  * `olist_products.csv`: product categories
+  * `olist_order_reviews.csv`: customer ratings
+  * `olist_order_payments.csv`: payment details
+
+> All raw files are stored under `data/raw/`, and processed files under `data/processed/` in `.parquet` format.
+
+---
+
+## 4. Technical Structure
+
+| Module / Folder         | Description                                                                                                                 |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `data/`                 | Contains `raw/`, `processed/`, and `predictions.csv` for inference results                                                  |
+| `src/`                  | Core logic for preprocessing (`data_prep.py`), training (`train.py`), prediction (`predict.py`), and utilities (`utils.py`) |
+| `notebooks/`            | EDA, feature engineering, and MLflow-logged training experiments                                                            |
+| `pipelines/`            | Prefect flows and pipelines, including full end-to-end automation                                                           |
+| `deployment/`           | FastAPI app (`app.py`), Dockerfile, and Render deployment YAML                                                              |
+| `monitoring/`           | Evidently report generation + monitoring integration                                                                        |
+| `mlruns/` & `mlflow.db` | Local MLflow tracking server DB and logs                                                                                    |
+| `prefect/`              | CLI configs, YAML deployment, monitoring runners                                                                            |
+| `terraform/`            | IaC scripts for provisioning services on Render or GCP                                                                      |
+| `tests/`                | Unit/integration tests, CI compatibility                                                                                    |
+| `.github/`              | GitHub Actions workflows for CI/CD                                                                                          |
+| `Makefile`              | Shell command wrappers for common workflows                                                                                 |
+| `Dockerfile`            | Image build instructions for deployment                                                                                     |
+
+---
+
+## 5. Database & Storage Setup
+
+* **MLflow Tracking DB**: `mlflow.db` using SQLite for local tracking
+* **ML Artifacts**: Stored in `mlruns/` with metrics, conda.yaml, and models
+* **Data Files**: Stored as `.csv` (raw) and `.parquet` (processed) in `data/`
+
+For production, one can upgrade:
+
+* MLflow backend to PostgreSQL
+* Artifact store to S3, GCS, or Azure
+* Prefect Cloud/agent setup
+
+---
+
+## 6. ML Pipeline Breakdown
+
+### ⚙️ Data Preprocessing (`src/data_prep.py`)
+
+* Load raw CSVs
+* Join and filter tables (based on FK relationships)
+* Feature engineering: return rate, category encodings, etc.
+* Output `X_train`, `X_test`, `y_train`, `y_test` to `data/processed/`
+
+**Run manually:**
 
 ```bash
-├── data/                        # Raw, processed, and prediction data
-├── deployment/                 # FastAPI app and Render/K8s deployment config
-├── monitoring/                 # Drift detection scripts & HTML reports
-├── notebooks/                  # EDA, feature engineering, and training notebooks
-├── pipelines/                  # Prefect pipeline script
-├── prefect/                    # Prefect CLI configs, monitoring runner
-├── src/                        # Source code for training and prediction
-├── models/                     # Trained ML model (joblib format)
-├── mlruns/, mlflow.db          # MLflow tracking artifacts and metadata
-├── .github/workflows/ci.yml    # GitHub Actions pipeline for testing
-├── requirements.txt            # Python dependencies
-├── prefect.yaml                # Prefect deployment CLI config
-├── Dockerfile, Makefile        # Docker & command automation
-├── run_deployment.py           # Script for triggering Prefect flow
-├── test_predict.py             # Test script for model inference
-├── terraform/                  # Infrastructure as Code (Render/GCP)
-└── README.md                   # Project documentation
+python src/data_prep.py
 ```
 
 ---
 
-## 📦 Module Details
+### 📈 Model Training with MLflow (`src/train.py`)
 
-### 🗃️ `data/`
+* Train `RandomForestClassifier`
+* Evaluate metrics (Accuracy, F1-score)
+* Log everything to MLflow:
 
-* `raw/`: Contains original Olist e-commerce dataset CSVs.
-* `processed/`: Preprocessed Parquet files: `train`, `test`, `X`, `y` splits.
-* `predictions.csv`: Output file from inference pipeline.
+  * Parameters: `n_estimators`, `max_depth`, etc.
+  * Metrics: `accuracy`, `f1_score`, etc.
+  * Artifacts: `model.pkl`, `conda.yaml`, `requirements.txt`
+  * Tags: user, source, runName
 
-### 🧠 `src/`
-
-* `data_prep.py`: Loads raw data, handles missing values, encodes, and splits.
-* `train.py`: Trains a Random Forest model, tracks with MLflow.
-* `predict.py`: Generates predictions using the trained model.
-* `utils.py`: Shared helper functions.
-
-### 📓 `notebooks/`
-
-* `eda.ipynb`: Explore distributions, missing values, correlations.
-* `feature_engineering.ipynb`: Encoding, scaling, and transformation logic.
-* `model_training.ipynb`: Model experimentation + MLflow logging walkthrough.
-
-### 🧪 `models/`
-
-* `return_model.joblib`: Final serialized version of the trained model.
-
-### 📁 `mlruns/`, `mlflow.db`
-
-* MLflow tracking backend for:
-
-  * Parameters
-  * Metrics (Accuracy, F1-score)
-  * Artifacts (model.pkl, conda.yaml, envs)
-
----
-
-## ⚙️ Prefect 2.0 Orchestration
-
-### 🧵 `pipelines/prefect_flow.py`
-
-Defines `@flow` called `full_pipeline()`:
-
-* Loads → preprocesses → trains → evaluates → predicts → monitors drift
-
-### 🧾 `prefect.yaml`
-
-* CLI-generated deployment config
-* Allows you to run via:
+**Run manually:**
 
 ```bash
-prefect deploy -n "Ecommerce Return Pipeline"
+python src/train.py
 ```
 
-### 🧪 `prefect/run_monitoring_flow.py`
-
-* Triggers monitoring task separately via CLI or script
-
-### 🧾 `run_deployment.py`
-
-* On-demand triggering of full Prefect pipeline
-
----
-
-## 🛰️ Deployment Modules
-
-### ⚙️ `deployment/app.py`
-
-* Optional FastAPI app for serving predictions via `/predict`
-
-### 🧾 `deployment/service.yaml`
-
-* Kubernetes/Render-compatible YAML deployment descriptor
-
----
-
-## 📊 Monitoring with Evidently
-
-### 🧭 `monitoring/evidently_monitor.py`
-
-* Generates drift report by comparing reference vs current dataset
-* Runs as Prefect task or cronjob
-
-### 📊 `monitoring/evidently_report.html`
-
-* Output HTML report from Evidently with visual metrics
-
----
-
-## ✅ Tests
-
-### 🔍 `test_predict.py`
-
-* Verifies that the saved model loads and makes predictions
-* Ensures CI/CD test automation
-
----
-
-## 🐍 Setup & Usage
-
-### 🔧 Environment Setup
+**MLflow Setup & Access:**
 
 ```bash
-conda create -n mlops311 python=3.11 -y
-conda activate mlops311
-pip install -r requirements.txt
+mlflow ui --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns
 ```
 
-### 🚦 Start Prefect Server & Worker
+![MLflow UI Detailed View](images/mlflow-01.png)
+
+URL: [http://127.0.0.1:5000](http://127.0.0.1:5000)
+
+---
+
+### 🎺 Prediction (`src/predict.py`)
+
+* Load latest model from `models/` or MLflow registry
+* Predict on holdout/test data
+* Save results in `data/predictions.csv`
+
+**Run manually:**
 
 ```bash
-prefect server start
-prefect worker start -q default
+python src/predict.py
 ```
 
-### 🚀 Deploy the Pipeline
+---
+
+### ↻ Full Orchestration (`pipelines/prefect_flow.py`)
+
+* A unified `@flow` for preprocessing, training, prediction, monitoring
+
+**Deploy and run:**
 
 ```bash
-prefect deploy pipelines/prefect_flow.py:full_pipeline \
-  -n "Ecommerce Return Pipeline" \
-  -q "default" \
-  -p "default-agent-pool"
-```
-
-### 🔁 Trigger Manual Run
-
-```bash
+prefect deploy pipelines/prefect_flow.py:full_pipeline -n "Ecommerce Return Pipeline"
 prefect deployment run 'ecommerce-return-mlops/Ecommerce Return Pipeline'
 ```
 
----
-
-## 📈 Output & Artifacts
-
-* 🔹 Drift Report: `monitoring/evidently_report.html`
-* 🔹 Tracked Experiments: MLflow UI under `mlruns/`
-* 🔹 Serialized Model: `models/return_model.joblib`
-* 🔹 Scheduled Deployment: `prefect.yaml`
+![Prefect Deployment UI](images/prefect-02.png)
 
 ---
 
-## 🧠 Best Practices Implemented
+## 7. Deployment Details
 
-* ✅ GitHub Codespaces-friendly environment
-* ✅ MLflow Tracking + Model Registry
-* ✅ Prefect Flow Scheduling and Deployment
-* ✅ Lightweight Containerized Deployment (optional)
-* ✅ Drift Monitoring with Evidently
-* ✅ CI/CD Pipeline with GitHub Actions
-* ✅ Infrastructure-as-Code setup scaffold with Terraform
+### 🌐 FastAPI App (`deployment/app.py`)
+
+* `/predict` endpoint receives JSON and returns predictions
+* Dockerized using `Dockerfile`
+
+**Run locally:**
+
+```bash
+uvicorn deployment.app:app --reload --port 8000
+```
+
+### ☁️ Render Cloud Hosting
+
+* GitHub-connected Docker deployment
+* Exposes FastAPI app publicly
+
+**Render setup:**
+
+* Connect GitHub repo
+* Select Web Service → Dockerfile → root = project root
+
+![Render Deployment](images/render-02.png)
 
 ---
 
-## 🏁 Future Enhancements
+### ⚠️ Terraform IaC (`terraform/`)
 
-* 🔁 Automated retraining and model versioning
-* 🧪 Unit tests for each module
-* 📣 Slack/email alerts for drift detection
-* ☁️ Remote artifact logging (S3/GCS/Weights & Biases)
-* 🐳 Publish Docker container on Render or GCP
+* Defines Render/GCP infrastructure
+* Used for provisioning via `terraform apply`
+
+![Render Terraform Preview]
 
 ---
 
-## 👨‍💻 Author
+## 8. Monitoring with Evidently
+
+### 📊 Script (`monitoring/evidently_monitor.py`)
+
+* Compares train vs current inference set
+* Uses `DataDriftPreset()`
+* Generates HTML report: `monitoring/evidently_report.html`
+
+**Run manually:**
+
+```bash
+python monitoring/evidently_monitor.py
+```
+
+---
+
+### ↻ Scheduled with Prefect
+
+* Deployed as standalone monitoring flow
+* Future: Add auto-retrain or Slack alerts
+
+![Evidently Drift Monitoring Example]
+
+---
+
+## 9. CI/CD Pipeline
+
+### ✅ GitHub Actions (`.github/workflows/ci.yml`)
+
+```yaml
+name: CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: pytest tests/
+```
+
+---
+
+## 🔬 Reproducibility
+
+```bash
+# 1. Create environment
+conda create -n mlops311 python=3.11 -y
+conda activate mlops311
+pip install -r requirements.txt
+
+# 2. Launch MLflow and Prefect locally
+mlflow ui --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns
+prefect server start
+prefect worker start -q default
+
+# 3. Deploy and run pipeline
+prefect deploy pipelines/prefect_flow.py:full_pipeline -n "Ecommerce Return Pipeline"
+prefect deployment run 'ecommerce-return-mlops/Ecommerce Return Pipeline'
+
+# 4. Optional: Run components manually
+python src/data_prep.py
+python src/train.py
+python src/predict.py
+python monitoring/evidently_monitor.py
+```
+
+---
+
+## ✅ Best Practices Covered
+
+| Practice                 | Implemented | Description                               |
+| ------------------------ | ----------- | ----------------------------------------- |
+| Unit Tests               | ✅           | `tests/test_predict.py`                   |
+| Integration Test         | ✅           | Prediction + data flow                    |
+| Linter / Code Formatting | ✅           | Black, isort, flake8 (optional)           |
+| Makefile                 | ✅           | Automation for repeatable steps           |
+| Pre-commit Hooks         | ✅           | Add `.pre-commit-config.yaml` (suggested) |
+| CI/CD Pipeline           | ✅           | GitHub Actions pipeline                   |
+
+---
+
+## 👨‍💼 Author
 
 **Shrikant Ganji**
 🚀 MLOps Zoomcamp | 2025 Edition
